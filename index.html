@@ -761,5 +761,12 @@
     if(!currentUser) setTimeout(() => { if(!currentUser && authModal) authModal.classList.add('show'); }, 200);
     showTab('home');
 </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered', reg))
+      .catch(err => console.log('SW error', err));
+  }
+</script>
 </body>
 </html>
