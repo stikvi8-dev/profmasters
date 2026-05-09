@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ПрофМастер | социальная сеть специалистов</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #e0e0e0; }
+        .bg { position: fixed; inset: 0; background: radial-gradient(circle at 20% 30%, #111, #030303); z-index: -2; }
+        .bg::after { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: -1; }
+        .menu-btn { position: fixed; top: 20px; left: 20px; z-index: 100; background: #1a1a1aee; backdrop-filter: blur(8px); border: 1px solid #444; border-radius: 14px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; z-index: 101; }
+        .menu-btn:hover { background: #333; }
+        .menu-btn i { font-size: 22px; color: #ccc; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: #111111f2; backdrop-filter: blur(16px); border-right: 1px solid #333; z-index: 99; transition: left 0.3s ease; padding: 90px 16px 30px; display: flex; flex-direction: column; gap: 8px; }
+        .sidebar.open { left: 0; }
+        .sidebar a, .sidebar .menu-item { padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; gap: 14px; color: #ccc; text-decoration: none; font-weight: 500; cursor: pointer; transition: 0.2s; }
+        .sidebar a i, .sidebar .menu-item i { width: 24px; color: #888; }
+        .sidebar a:hover, .sidebar .menu-item:hover { background: #2a2a2a60; transform: translateX(4px); color: white; }
+        .divider { height: 1px; background: #2a2a2a; margin: 12px 0; }
+        .overlay { position: fixed; inset: 0; background: #00000099; backdrop-filter: blur(2px); z-index: 98; display: none; }
+        .overlay.show { display: block; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 80px 20px 40px; }
+        .card { background: #111111cc; backdrop-filter: blur(8px); border: 1px solid #2a2a2a; border-radius: 28px; padding: 24px; margin-bottom: 30px; }
+        h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 10px; }
+        .profiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-top: 20px; }
+        .user-card { background: #0f0f0f; border-radius: 24px; padding: 20px; border: 1px solid #2a2a2a; transition: 0.2s; cursor: pointer; }
+        .user-card:hover { border-color: #888; transform: translateY(-3px); background: #151515; }
+        .user-avatar { width: 60px; height: 60px; border-radius: 30px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; }
+        .friend-btn, .chat-btn, .unfriend-btn { padding: 8px 16px; border-radius: 30px; font-size: 13px; border: none; cursor: pointer; transition: 0.2s; margin-right: 8px; }
+        .friend-btn { background: #2a2a2a; color: #ccc; }
+        .friend-btn:hover { background: #444; }
+        .unfriend-btn { background: #3a2a2a; color: #ccaaaa; }
+        .unfriend-btn:hover { background: #884444; color: white; }
+        .chat-btn { background: #2a2a2a; color: #ccc; }
+        .chat-btn:hover { background: #444; }
+        .badge-sub { background: #1e3a2e; padding: 4px 10px; border-radius: 20px; font-size: 11px; display: inline-block; margin-bottom: 8px; }
+        .badge-no-sub { background: #3a2e1e; }
+        .city-chip, .vacancy-chip { display: inline-block; background: #1e1e1e; padding: 8px 16px; border-radius: 30px; font-size: 13px; margin: 5px; cursor: pointer; border: 1px solid #333; transition: 0.1s; }
+        .city-chip:hover, .vacancy-chip:hover { background: #444; color: white; }
+        .city-chip.active, .vacancy-chip.active { background: #555; color: white; border-color: #888; }
+        .filter-section { margin-bottom: 30px; }
+        .filter-section h4 { margin-bottom: 12px; color: #aaa; font-size: 14px; letter-spacing: 1px; }
+        .filter-reset { margin-top: 20px; text-align: center; }
+        .long-btn { display: block; width: 100%; margin-top: 15px; text-align: center; background: #2a2a2a; padding: 10px; border-radius: 40px; cursor: pointer; border: 1px solid #555; transition: 0.2s; }
+        .long-btn:hover { background: #444; }
+        .profile-modal, .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #151515f2; backdrop-filter: blur(24px); border: 1px solid #666; border-radius: 32px; padding: 28px; width: 500px; max-width: 90%; max-height: 80vh; overflow-y: auto; z-index: 200; display: none; flex-direction: column; gap: 16px; }
+        .profile-modal.show, .modal.show { display: flex; }
+        .review-item { background: #1a1a1a; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+        .profile-anket-item { background: #1a1a1a; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+        .anket-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .anket-edit-btn, .anket-delete-btn { padding: 6px 12px; border-radius: 20px; font-size: 12px; border: none; cursor: pointer; }
+        .anket-edit-btn { background: #2a2a2a; color: #ccc; }
+        .anket-edit-btn:hover { background: #444; }
+        .anket-delete-btn { background: #3a2a2a; color: #ccaaaa; }
+        .anket-delete-btn:hover { background: #884444; color: white; }
+        .create-info { background: #1e3a2e; padding: 12px; border-radius: 20px; text-align: center; margin-top: 10px; }
+        .chat-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+        .friends-list { flex: 1; min-width: 200px; background: #0a0a0a; border-radius: 20px; padding: 16px; }
+        .chat-area { flex: 2; background: #0a0a0a; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; height: 450px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 10px; }
+        .msg-bubble { background: #1a1a1a; padding: 8px 14px; border-radius: 18px; margin-bottom: 8px; max-width: 80%; }
+        .notification-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .notification { background: #1a1a1a; border-left: 3px solid #888; border-radius: 12px; padding: 12px 20px; min-width: 260px; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; } }
+        .notification.fade-out { animation: fadeOut 0.3s forwards; }
+        input, textarea, select { width: 100%; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 12px; color: white; }
+        .btn-primary { background: #333; border: none; padding: 10px 20px; border-radius: 40px; color: white; cursor: pointer; }
+        .btn-primary:hover { background: #555; }
+        .btn-outline { background: transparent; border: 1px solid #555; padding: 8px 20px; border-radius: 40px; color: #ccc; cursor: pointer; }
+        .btn-outline:hover { background: #333; }
+        .friends-user { padding: 10px; margin: 5px 0; border-radius: 12px; cursor: pointer; background: #111; }
+        .friends-user:hover { background: #222; }
+        .logout-btn { color: #ccaaaa; }
+        .logout-btn:hover { background: #3a2a2a; color: #ff8888; }
+        @media (max-width: 700px) {
+            .container { padding: 70px 16px 30px; }
+            .profiles-grid { grid-template-columns: 1fr; }
+            .sidebar { width: 260px; }
+            .card { padding: 16px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></div>
+<div class="sidebar" id="sidebar">
+    <a href="#" data-tab="home"><i class="fas fa-home"></i> Главная</a>
+    <a href="#" data-tab="cities"><i class="fas fa-city"></i> Города</a>
+    <a href="#" data-tab="vacancies"><i class="fas fa-briefcase"></i> Профессии</a>
+    <a href="#" data-tab="friends"><i class="fas fa-user-friends"></i> Друзья</a>
+    <a href="#" data-tab="chats"><i class="fas fa-comments"></i> Чаты</a>
+    <div class="divider"></div>
+    <div class="menu-item" id="openProfileSettings"><i class="fas fa-user-edit"></i> Мой профиль</div>
+    <div class="menu-item" id="openSettings"><i class="fas fa-cog"></i> Настройки</div>
+    <div class="divider"></div>
+    <div class="menu-item logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</div>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="notification-container" id="notifyContainer"></div>
+
+<!-- Модалки -->
+<div class="modal" id="authModal">
+    <h1 style="font-size: 1.8rem; text-align: center; margin-bottom: 10px;">ПрофМастер</h1>
+    <p style="text-align: center; font-size: 14px; color: #999; margin-bottom: 20px;">Социальная сеть для специалистов</p>
+    <div style="display:flex;gap:12px;margin-bottom:20px;">
+        <button id="showLogin" class="btn-primary" style="flex:1">Вход</button>
+        <button id="showReg" class="btn-outline" style="flex:1">Регистрация</button>
+    </div>
+    <div id="loginForm">
+        <input type="text" id="loginUser" placeholder="Логин">
+        <input type="password" id="loginPass" placeholder="Пароль">
+        <button class="btn-primary" id="doLogin" style="width:100%;">Войти</button>
+    </div>
+    <div id="regForm" style="display:none">
+        <input type="text" id="regUser" placeholder="Логин">
+        <input type="password" id="regPass" placeholder="Пароль">
+        <input type="text" id="regContact" placeholder="Email или телефон">
+        <button class="btn-primary" id="doReg" style="width:100%;">Зарегистрироваться</button>
+    </div>
+    <small style="text-align:center; display:block; margin-top:15px; color:#777;">После регистрации вы сможете создавать анкеты</small>
+</div>
+
+<div class="modal" id="settingsModal"><h3>Настройки</h3><div id="subInfo" style="background:#1e1e1e;padding:10px;border-radius:20px;margin-bottom:15px;"><i class="fas fa-crown"></i> <span id="subText">Загрузка...</span></div><button id="buySubBtn" class="btn-primary" style="margin-bottom:15px;">Активировать подписку (1 раз)</button><input type="text" id="newLogin" placeholder="Новый логин"><input type="password" id="newPass" placeholder="Новый пароль"><input type="text" id="newContact" placeholder="Новый email"><button class="btn-primary" id="saveSettingsBtn">Сохранить</button><button class="btn-outline" id="closeSettings">Закрыть</button></div>
+
+<div class="profile-modal" id="profileModal"><h3 id="profileTitle">Профиль</h3><div id="profileSubInfo"></div><h4>Анкеты</h4><div id="profileAnkets"></div><h4>Отзывы</h4><div id="profileReviews"></div><div id="reviewBlock" style="display:none;"><textarea id="reviewText" placeholder="Ваш отзыв..."></textarea><select id="reviewRating"><option value="5">★★★★★ 5</option><option value="4">★★★★☆ 4</option><option value="3">★★★☆☆ 3</option><option value="2">★★☆☆☆ 2</option><option value="1">★☆☆☆☆ 1</option></select><button class="btn-primary" id="addReviewBtn">Добавить отзыв</button></div><div id="reviewNotAllowed" style="display:none;background:#3a2e1e;padding:12px;border-radius:16px;"><i class="fas fa-lock"></i> Отзыв можно оставить только после покупки услуги</div><button class="btn-outline" id="closeProfileBtn">Закрыть</button></div>
+
+<div class="modal" id="editAnketModal"><h3>Редактировать анкету</h3><input type="text" id="editAnketId" style="display:none;"><input type="text" id="editAnketName" placeholder="Имя"><select id="editAnketCategory"><option>🔌 Электрик</option><option>🔧 Сантехник</option><option>🏗️ Строитель</option><option>🧹 Уборщик</option><option>💻 Программист</option><option>🚚 Грузчик</option><option>🍳 Повар</option><option>👶 Няня</option><option>🚗 Водитель</option><option>🎨 Дизайнер</option></select><input type="text" id="editAnketCity" placeholder="Город"><textarea rows="2" id="editAnketDesc" placeholder="Опыт, услуги"></textarea><button class="btn-primary" id="saveEditAnketBtn">Сохранить</button><button class="btn-outline" id="closeEditAnketBtn">Отмена</button></div>
+
+<div class="confirm-modal" id="confirmModal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1af2;backdrop-filter:blur(24px);border:1px solid #666;border-radius:28px;padding:28px;width:360px;max-width:90%;z-index:250;display:none;flex-direction:column;gap:20px;text-align:center;"><h3 id="confirmTitle">Подтверждение</h3><p id="confirmMessage">Вы уверены?</p><div style="display:flex;gap:12px;justify-content:center;"><button class="btn-primary" id="confirmYesBtn">Да</button><button class="btn-outline" id="confirmNoBtn">Нет</button></div></div>
+
+<div class="input-modal" id="citySearchModal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1af2;backdrop-filter:blur(24px);border:1px solid #666;border-radius:28px;padding:28px;width:360px;max-width:90%;z-index:250;display:none;flex-direction:column;gap:16px;text-align:center;"><h3><i class="fas fa-city"></i> Найти город</h3><input type="text" id="citySearchInput" placeholder="Введите город"><button class="btn-primary" id="applyCitySearchBtn">Найти</button><button class="btn-outline" id="closeCitySearchBtn">Отмена</button></div>
+
+<div class="input-modal" id="vacancySearchModal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1af2;backdrop-filter:blur(24px);border:1px solid #666;border-radius:28px;padding:28px;width:360px;max-width:90%;z-index:250;display:none;flex-direction:column;gap:16px;text-align:center;"><h3><i class="fas fa-briefcase"></i> Найти профессию</h3><input type="text" id="vacancySearchInput" placeholder="Введите профессию"><button class="btn-primary" id="applyVacancySearchBtn">Найти</button><button class="btn-outline" id="closeVacancySearchBtn">Отмена</button></div>
+
+<div class="modal" id="chatModal"><h3>Чат с <span id="chatPartnerName"></span></h3><div id="chatMessagesArea" style="height:300px;overflow-y:auto;background:#0a0a0a;border-radius:16px;padding:12px;"></div><div style="display:flex;gap:10px;margin-top:12px;"><input type="text" id="chatInput" placeholder="Сообщение..."><button class="btn-primary" id="sendChatBtn">→</button></div><button class="btn-outline" id="closeChatBtn">Закрыть</button></div>
+
+<main class="container">
+    <h1><i class="fas fa-chalkboard-user"></i> ПрофМастер</h1>
+    <p style="margin-bottom:25px;color:#999;">ПрофМастер — сервис для поиска и публикации анкет. Здесь вы можете найти подходящего вам клиента на любой вкус и цвет!</p>
+    
+    <div id="createFormBlock" class="card" style="margin-bottom:20px;">
+        <h3>✏️ Создать анкету</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <input type="text" id="profName" placeholder="Имя специалиста">
+            <select id="profCatSelect">
+                <option>🔌 Электрик</option><option>🔧 Сантехник</option><option>🏗️ Строитель</option>
+                <option>🧹 Уборщик</option><option>💻 Программист</option><option>🚚 Грузчик</option>
+                <option>🍳 Повар</option><option>👶 Няня</option><option>🚗 Водитель</option>
+                <option>🎨 Дизайнер</option>
+            </select>
+            <input type="text" id="profCityInput" placeholder="Город">
+            <textarea rows="2" id="profDesc" placeholder="Опыт, услуги"></textarea>
+            <button class="btn-primary" id="publishProfileBtn">Опубликовать</button>
+        </div>
+    </div>
+    <div id="createLimitInfo" class="card create-info" style="display:none;"><i class="fas fa-info-circle"></i> Лимит: 1 анкета. Удалите текущую в профиле.</div>
+    
+    <div id="homeTab" class="tab"><div class="card"><div id="usersList" class="profiles-grid"></div></div></div>
+    <div id="citiesTab" class="tab" style="display:none"><div class="card"><div class="filter-section"><h4><i class="fas fa-city"></i> Города</h4><div id="citiesList" style="display:flex;flex-wrap:wrap;gap:10px;"></div><div class="long-btn" id="findCityBtn"><i class="fas fa-search"></i> Найти город</div></div><div class="filter-reset"><button class="btn-outline" id="resetCityFilterBtn">Сбросить фильтр города</button></div></div></div>
+    <div id="vacanciesTab" class="tab" style="display:none"><div class="card"><div class="filter-section"><h4><i class="fas fa-briefcase"></i> Профессии</h4><div id="vacanciesList" style="display:flex;flex-wrap:wrap;gap:10px;"></div><div class="long-btn" id="findVacancyBtn"><i class="fas fa-search"></i> Найти профессию</div></div><div class="filter-reset"><button class="btn-outline" id="resetVacancyFilterBtn">Сбросить фильтр профессии</button></div></div></div>
+    <div id="friendsTab" class="tab" style="display:none"><div class="card"><h3>👫 Мои друзья</h3><div id="friendsListContainer"></div></div></div>
+    <div id="chatsTab" class="tab" style="display:none"><div class="card"><h3>💬 Чаты с друзьями</h3><div class="chat-layout"><div class="friends-list"><h4>Друзья</h4><div id="friendsForChat"></div></div><div class="chat-area"><div id="chatHeader">Выберите друга</div><div class="chat-messages" id="chatMessagesDisplay"></div><div style="display:flex;gap:10px;margin-top:12px;"><input type="text" id="globalChatInput" placeholder="Сообщение..."><button class="btn-primary" id="sendGlobalMsgBtn">Отправить</button></div></div></div></div></div>
+    <footer style="text-align:center;font-size:12px;opacity:0.5;">© ПрофМастер — показываются все анкеты пользователей</footer>
+</main>
+
+<script>
+    let audioCtx = null;
+    let audioInitialized = false;
+    
+    function initAudio() {
+        if (!audioInitialized) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioInitialized = true;
+            } catch(e) { console.log("Audio not supported"); }
+        }
+        return audioCtx;
+    }
+    
+    function playBeep() {
+        if (!audioInitialized) { initAudio(); }
+        if (audioCtx && audioCtx.state === 'suspended') { audioCtx.resume(); }
+        if (!audioCtx) return;
+        try {
+            let oscillator = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.1;
+            oscillator.type = 'sine';
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        } catch(e) { console.log("Beep error"); }
+    }
+    
+    document.body.addEventListener('click', function() {
+        if (!audioInitialized) {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') { audioCtx.resume(); }
+        }
+    }, { once: false });
+    
+    function showNotification(msg, icon='info'){ 
+        let c = document.getElementById('notifyContainer'); 
+        if(!c) return; 
+        let n = document.createElement('div'); 
+        n.className = 'notification'; 
+        n.innerHTML = `<i class="fas fa-${icon}"></i> <span>${escapeHtml(msg)}</span>`; 
+        c.appendChild(n); 
+        playBeep(); 
+        setTimeout(() => { n.classList.add('fade-out'); setTimeout(() => n.remove(), 300); }, 3000); 
+    }
+    
+    function escapeHtml(s){ if(s === undefined || s === null) return ''; s = String(s); return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    
+    let confirmResolve = null;
+    function showConfirm(title, msg) { 
+        return new Promise(r => { 
+            confirmResolve = r; 
+            document.getElementById('confirmTitle').innerText = title; 
+            document.getElementById('confirmMessage').innerText = msg; 
+            document.getElementById('confirmModal').style.display = 'flex'; 
+            document.getElementById('overlay').classList.add('show'); 
+        }); 
+    }
+    document.getElementById('confirmYesBtn').onclick = () => { 
+        document.getElementById('confirmModal').style.display = 'none'; 
+        document.getElementById('overlay').classList.remove('show'); 
+        if(confirmResolve) confirmResolve(true); 
+        confirmResolve = null; 
+    };
+    document.getElementById('confirmNoBtn').onclick = () => { 
+        document.getElementById('confirmModal').style.display = 'none'; 
+        document.getElementById('overlay').classList.remove('show'); 
+        if(confirmResolve) confirmResolve(false); 
+        confirmResolve = null; 
+    };
+    
+    let users = JSON.parse(localStorage.getItem('pm_users')) || [];
+    let profiles = JSON.parse(localStorage.getItem('pm_profiles')) || [];
+    let reviews = JSON.parse(localStorage.getItem('pm_reviews')) || [];
+    let friends = JSON.parse(localStorage.getItem('pm_friends')) || {};
+    let privateMessages = JSON.parse(localStorage.getItem('pm_messages')) || {};
+    let currentUser = localStorage.getItem('pm_current');
+    let selectedCity = localStorage.getItem('pm_selected_city') || '';
+    let selectedVacancy = localStorage.getItem('pm_selected_vacancy') || '';
+    
+    const defaultCities = ["Москва", "СПб", "Новосибирск", "Екатеринбург", "Казань", "Нижний Новгород", "Челябинск", "Самара", "Омск", "Ростов-на-Дону", "Уфа", "Красноярск", "Краснодар", "Воронеж", "Тюмень"];
+    const defaultVacancies = ["🔌 Электрик", "🔧 Сантехник", "🏗️ Строитель", "🧹 Уборщик", "💻 Программист", "🚚 Грузчик", "🍳 Повар", "👶 Няня", "🚗 Водитель", "🎨 Дизайнер", "📐 Разнорабочий", "🔨 Отделочник"];
+    const SUBSCRIPTION_DAYS = 30;
+    
+    if(users.length === 0) { 
+        users.push({ login: "demo", password: "123", contact: "demo@mail.com", subscription: { active: true, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, usedFree: true } }); 
+        users.push({ login: "alex", password: "123", contact: "alex@mail.com", subscription: { active: false, expiresAt: 0, usedFree: false } }); 
+        users.push({ login: "maria", password: "123", contact: "maria@mail.com", subscription: { active: true, expiresAt: Date.now() + 15 * 24 * 60 * 60 * 1000, usedFree: true } }); 
+        saveAll(); 
+    }
+    if(profiles.length === 0) { 
+        profiles.push({ id: 1, name: "Электрик PRO", category: "🔌 Электрик", city: "Москва", desc: "Опыт 10 лет", author: "demo" }); 
+        profiles.push({ id: 2, name: "Сантехник", category: "🔧 Сантехник", city: "СПб", desc: "Качественно", author: "alex" }); 
+        profiles.push({ id: 3, name: "Мария Дизайнер", category: "🎨 Дизайнер", city: "Москва", desc: "Интерьеры", author: "maria" }); 
+        saveAll(); 
+    }
+    
+    function saveAll() { 
+        localStorage.setItem('pm_users', JSON.stringify(users)); 
+        localStorage.setItem('pm_profiles', JSON.stringify(profiles)); 
+        localStorage.setItem('pm_reviews', JSON.stringify(reviews)); 
+        localStorage.setItem('pm_friends', JSON.stringify(friends)); 
+        localStorage.setItem('pm_messages', JSON.stringify(privateMessages)); 
+        localStorage.setItem('pm_selected_city', selectedCity); 
+        localStorage.setItem('pm_selected_vacancy', selectedVacancy); 
+    }
+    
+    function hasSubscription(userLogin) { let u = users.find(u => u.login === userLogin); return u?.subscription?.active && u.subscription.expiresAt > Date.now(); }
+    function getUserProfilesCount(login) { return profiles.filter(p => p.author === login).length; }
+    function canCreateProfile(userLogin) { return hasSubscription(userLogin) && getUserProfilesCount(userLogin) < 1; }
+    function canReview(targetUser) { if(!currentUser) return false; if(currentUser === targetUser) return false; return hasSubscription(targetUser); }
+    
+    function updateCreateFormVisibility() {
+        let createBlock = document.getElementById('createFormBlock');
+        let limitInfo = document.getElementById('createLimitInfo');
+        if(!currentUser || !hasSubscription(currentUser) || getUserProfilesCount(currentUser) >= 1) {
+            if(createBlock) createBlock.style.display = 'none';
+            if(limitInfo) limitInfo.style.display = 'block';
+        } else {
+            if(createBlock) createBlock.style.display = 'block';
+            if(limitInfo) limitInfo.style.display = 'none';
+        }
+    }
+    
+    // ПОКАЗЫВАЕМ ВСЕ АНКЕТЫ (ВКЛЮЧАЯ СВОИ) БЕЗ ФИЛЬТРОВ ПО УМОЛЧАНИЮ
+    function getAllAnkets() {
+        // Если фильтры не выбраны - показываем все анкеты
+        if (!selectedCity && !selectedVacancy) {
+            return profiles;
+        }
+        // Если фильтры выбраны - применяем их
+        return profiles.filter(p => {
+            let match = true;
+            if (selectedCity && p.city !== selectedCity) match = false;
+            if (selectedVacancy && p.category !== selectedVacancy) match = false;
+            return match;
+        });
+    }
+    
+    function getAvgRating(login) { 
+        let rr = reviews.filter(r => r.to === login); 
+        if(rr.length === 0) return 0; 
+        return rr.reduce((s, r) => s + r.rating, 0) / rr.length; 
+    }
+    
+    function activateFreeSubscription() { 
+        if(!currentUser) { showNotification("Войдите в аккаунт", "exclamation-triangle"); return; } 
+        let idx = users.findIndex(u => u.login === currentUser); 
+        if(idx === -1) return; 
+        if(users[idx].subscription?.usedFree) { showNotification("Подписка уже активирована (1 раз)", "exclamation-triangle"); return; } 
+        users[idx].subscription = { active: true, expiresAt: Date.now() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000, usedFree: true }; 
+        saveAll(); 
+        showNotification("Подписка активирована на 30 дней!", "crown"); 
+        renderUsersList(); 
+        updateSettingsUI(); 
+        updateCreateFormVisibility();
+    }
+    
+    function publishProfile() { 
+        if(!currentUser) { showNotification("Войдите в аккаунт", "exclamation-triangle"); return; } 
+        if(!hasSubscription(currentUser)) { showNotification("Нужна подписка!", "lock"); return; } 
+        if(getUserProfilesCount(currentUser) >= 1) { showNotification("Лимит 1 анкета", "exclamation-triangle"); return; } 
+        let name = document.getElementById('profName').value.trim(); 
+        let cat = document.getElementById('profCatSelect').value; 
+        let city = document.getElementById('profCityInput').value.trim(); 
+        let desc = document.getElementById('profDesc').value.trim(); 
+        if(!name || !city) { showNotification("Введите имя и город", "exclamation-triangle"); return; } 
+        profiles.push({ id: Date.now(), name, category: cat, city, desc: desc || "Профессионал", author: currentUser }); 
+        saveAll(); 
+        renderUsersList(); 
+        document.getElementById('profName').value = ''; 
+        document.getElementById('profCityInput').value = ''; 
+        document.getElementById('profDesc').value = ''; 
+        updateCreateFormVisibility(); 
+        showNotification(`Анкета "${name}" опубликована!`, "check-circle"); 
+    }
+    
+    async function deleteAnket(id) { 
+        if(await showConfirm("Удаление анкеты", "Удалить эту анкету?")) { 
+            let idx = profiles.findIndex(p => p.id === id); 
+            if(idx !== -1) { 
+                profiles.splice(idx, 1); 
+                saveAll(); 
+                if(window.currentProfileUser) window.openUserProfile(window.currentProfileUser); 
+                updateCreateFormVisibility(); 
+                renderUsersList(); 
+                showNotification("Анкета удалена", "trash-alt"); 
+            } 
+        } 
+    }
+    
+    function openEditAnket(anket) { 
+        document.getElementById('editAnketId').value = anket.id; 
+        document.getElementById('editAnketName').value = anket.name; 
+        document.getElementById('editAnketCategory').value = anket.category; 
+        document.getElementById('editAnketCity').value = anket.city; 
+        document.getElementById('editAnketDesc').value = anket.desc; 
+        document.getElementById('editAnketModal').style.display = 'flex'; 
+        document.getElementById('overlay').classList.add('show'); 
+    }
+    
+    function saveEditAnket() { 
+        let id = parseInt(document.getElementById('editAnketId').value); 
+        let idx = profiles.findIndex(p => p.id === id); 
+        if(idx !== -1) { 
+            profiles[idx].name = document.getElementById('editAnketName').value.trim() || profiles[idx].name; 
+            profiles[idx].category = document.getElementById('editAnketCategory').value; 
+            profiles[idx].city = document.getElementById('editAnketCity').value.trim() || profiles[idx].city; 
+            profiles[idx].desc = document.getElementById('editAnketDesc').value.trim() || profiles[idx].desc; 
+            saveAll(); 
+            if(window.currentProfileUser) window.openUserProfile(window.currentProfileUser); 
+            showNotification("Анкета обновлена", "edit"); 
+            document.getElementById('editAnketModal').style.display = 'none'; 
+            document.getElementById('overlay').classList.remove('show'); 
+        } 
+    }
+    document.getElementById('saveEditAnketBtn').onclick = saveEditAnket;
+    document.getElementById('closeEditAnketBtn').onclick = () => { document.getElementById('editAnketModal').style.display = 'none'; document.getElementById('overlay').classList.remove('show'); };
+    
+    function addFriend(fromUser, toUser) { 
+        if(fromUser === toUser) return; 
+        if(!friends[fromUser]) friends[fromUser] = []; 
+        if(!friends[fromUser].includes(toUser)) { 
+            friends[fromUser].push(toUser); 
+            saveAll(); 
+            showNotification(`${toUser} добавлен в друзья!`, "user-plus"); 
+            renderUsersList(); 
+            renderFriendsList(); 
+            renderFriendsForChat(); 
+        } 
+    }
+    function removeFriend(fromUser, toUser) { 
+        if(friends[fromUser]) { 
+            friends[fromUser] = friends[fromUser].filter(f => f !== toUser); 
+            saveAll(); 
+            showNotification(`${toUser} удалён из друзей`, "user-minus"); 
+            renderUsersList(); 
+            renderFriendsList(); 
+            renderFriendsForChat(); 
+        } 
+    }
+    function isFriend(user, potential) { return friends[user]?.includes(potential) || false; }
+    
+    function sendMessage(to, text) { 
+        if(!currentUser || !text.trim()) return; 
+        if(!privateMessages[currentUser]) privateMessages[currentUser] = {}; 
+        if(!privateMessages[currentUser][to]) privateMessages[currentUser][to] = []; 
+        privateMessages[currentUser][to].push({ from: currentUser, text: text.trim(), time: new Date().toLocaleTimeString() }); 
+        saveAll(); 
+    }
+    function getMessages(user1, user2) { 
+        let res = []; 
+        if(privateMessages[user1]?.[user2]) res.push(...privateMessages[user1][user2]); 
+        if(privateMessages[user2]?.[user1]) res.push(...privateMessages[user2][user1]); 
+        return res.sort((a, b) => a.time.localeCompare(b.time)); 
+    }
+    function addReview(toUser, fromUser, rating, text){ 
+        if(!canReview(toUser)){ showNotification("Отзыв можно оставить только после покупки услуги","lock"); return; } 
+        if(!text.trim()) return; 
+        reviews.push({ to:toUser, from:fromUser, rating:parseInt(rating), text:text.trim(), date:new Date().toISOString() }); 
+        saveAll(); 
+        showNotification("Отзыв добавлен","star"); 
+        if(window.currentProfileUser) window.openUserProfile(window.currentProfileUser); 
+    }
+    function getUserReviews(login){ return reviews.filter(r=>r.to===login); }
+    
+    // ГЛАВНАЯ СТРАНИЦА - ПОКАЗЫВАЕМ ВСЕ АНКЕТЫ (ВКЛЮЧАЯ СВОИ)
+    function renderUsersList() { 
+        let container = document.getElementById('usersList'); 
+        if(!container) return; 
+        let allAnkets = getAllAnkets();
+        
+        if(allAnkets.length === 0) { 
+            container.innerHTML = '<div>Нет анкет</div>'; 
+            return; 
+        }
+        
+        container.innerHTML = allAnkets.map(anket => { 
+            let author = anket.author;
+            let hasSub = hasSubscription(author); 
+            let avgRating = getAvgRating(author); 
+            let isFriendWith = friends[currentUser] ? friends[currentUser].includes(author) : false;
+            let isOwn = (currentUser === author);
+            
+            return `<div class="user-card" onclick="window.openUserProfile('${escapeHtml(author)}')">
+                <div class="user-avatar"><i class="fas fa-user-circle"></i></div>
+                <div>
+                    <strong>${escapeHtml(author)}</strong> ${hasSub ? '<span class="badge-sub"><i class="fas fa-crown"></i> PRO</span>' : '<span class="badge-sub badge-no-sub">Без подписки</span>'}<br>
+                    <strong style="font-size:1.1rem;">📋 ${escapeHtml(anket.name)}</strong><br>
+                    <span class="badge" style="background:#2a2a2a; padding:2px 8px; border-radius:20px;">${escapeHtml(anket.category)}</span><br>
+                    📍 ${escapeHtml(anket.city)}<br>
+                    📝 ${escapeHtml(anket.desc.substring(0, 60))}${anket.desc.length > 60 ? '...' : ''}<br>
+                    ⭐ ${avgRating.toFixed(1)}
+                </div>
+                <div style="margin-top:15px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    ${isOwn ? 
+                        `<button class="anket-edit-btn" onclick="event.stopPropagation(); openEditAnket(${JSON.stringify(anket).replace(/"/g, '&quot;')})">✏️ Ред.</button>
+                         <button class="anket-delete-btn" onclick="event.stopPropagation(); deleteAnket(${anket.id})">🗑️ Удалить</button>` : 
+                        (isFriendWith ? 
+                            `<button class="unfriend-btn" onclick="event.stopPropagation(); window.removeFriendConfirm('${escapeHtml(author)}')">❌ Убрать из друзей</button>` : 
+                            `<button class="friend-btn" onclick="event.stopPropagation(); window.toggleFriend('${escapeHtml(author)}')">+ В друзья</button>`
+                        )
+                    }
+                    ${!isOwn ? `<button class="chat-btn" onclick="event.stopPropagation(); window.openChatWith('${escapeHtml(author)}')"><i class="fas fa-comment"></i> Чат</button>` : ''}
+                </div>
+            </div>`; 
+        }).join(''); 
+    }
+    
+    window.removeFriendConfirm = function(login) {
+        showConfirm("Удаление из друзей", `Убрать пользователя ${login} из друзей?`).then(confirmed => {
+            if(confirmed) removeFriend(currentUser, login);
+        });
+    };
+    
+    window.toggleFriend = function(login) { 
+        if(isFriend(currentUser, login)) {
+            removeFriend(currentUser, login);
+        } else { 
+            addFriend(currentUser, login);
+        }
+    };
+    
+    window.openUserProfile = function(login) { 
+        let user = users.find(u => u.login === login); 
+        if(!user) return; 
+        document.getElementById('profileTitle').innerHTML = `${escapeHtml(login)} ${hasSubscription(login) ? '<i class="fas fa-crown" style="color:#c9a03d"></i>' : ''}`; 
+        document.getElementById('profileSubInfo').innerHTML = `Анкет: ${getUserProfilesCount(login)} | Рейтинг: ${getAvgRating(login).toFixed(1)} ⭐`; 
+        let userProfiles = profiles.filter(p => p.author === login); 
+        document.getElementById('profileAnkets').innerHTML = userProfiles.map(p => `<div class="profile-anket-item"><b>${escapeHtml(p.name)}</b> - ${p.category}<br>📍 ${p.city}<br>${escapeHtml(p.desc)}${login === currentUser ? `<div class="anket-buttons"><button class="anket-edit-btn" onclick="event.stopPropagation(); openEditAnket(${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️ Ред.</button><button class="anket-delete-btn" onclick="event.stopPropagation(); deleteAnket(${p.id})">🗑️ Удалить</button></div>` : ''}</div>`).join('') || '<div>Нет анкет</div>'; 
+        let revs = getUserReviews(login); 
+        document.getElementById('profileReviews').innerHTML = revs.map(r => `<div class="review-item"><b>${escapeHtml(r.from)}</b> ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}<br>${escapeHtml(r.text)}</div>`).join('') || '<div>Нет отзывов</div>'; 
+        let reviewBlock = document.getElementById('reviewBlock'); 
+        let reviewNotAllowed = document.getElementById('reviewNotAllowed'); 
+        if(currentUser && canReview(login) && currentUser !== login) { 
+            reviewBlock.style.display = 'block'; 
+            reviewNotAllowed.style.display = 'none'; 
+        } else if(currentUser && currentUser !== login) { 
+            reviewBlock.style.display = 'none'; 
+            reviewNotAllowed.style.display = 'block'; 
+        } else { 
+            reviewBlock.style.display = 'none'; 
+            reviewNotAllowed.style.display = 'none'; 
+        } 
+        document.getElementById('profileModal').classList.add('show'); 
+        document.getElementById('overlay').classList.add('show'); 
+        window.currentProfileUser = login; 
+    };
+    
+    window.openChatWith = function(friend) { 
+        if(friend === currentUser) { showNotification("Нельзя написать самому себе", "exclamation-triangle"); return; }
+        selectedChatFriend = friend; 
+        document.getElementById('chatPartnerName').innerText = friend; 
+        let msgs = getMessages(currentUser, friend); 
+        document.getElementById('chatMessagesArea').innerHTML = msgs.map(m => `<div class="msg-bubble"><b>${escapeHtml(m.from)}</b>: ${escapeHtml(m.text)}<br><small>${m.time}</small></div>`).join(''); 
+        document.getElementById('chatModal').classList.add('show'); 
+        document.getElementById('overlay').classList.add('show'); 
+    };
+    
+    let selectedChatFriend = null;
+    function renderFriendsList() { 
+        let container = document.getElementById('friendsListContainer'); 
+        if(!container) return; 
+        let myFriends = friends[currentUser] || []; 
+        if(myFriends.length === 0) { container.innerHTML = '<div>Нет друзей. Добавьте пользователей на главной</div>'; return; } 
+        container.innerHTML = myFriends.map(f => `<div class="user-card" style="margin-bottom:12px;cursor:pointer;" onclick="window.openUserProfile('${escapeHtml(f)}')">
+            <div class="user-avatar"><i class="fas fa-user-circle"></i></div>
+            <div><strong>${escapeHtml(f)}</strong><br><small>Анкет: ${getUserProfilesCount(f)}</small></div>
+            <div style="margin-top:10px;"><button class="chat-btn" onclick="event.stopPropagation(); window.openChatWith('${escapeHtml(f)}')">💬 Написать</button></div>
+            <div style="margin-top:8px;"><button class="unfriend-btn" onclick="event.stopPropagation(); window.removeFriendConfirm('${escapeHtml(f)}')">❌ Убрать из друзей</button></div>
+        </div>`).join(''); 
+    }
+    function renderFriendsForChat() { 
+        let container = document.getElementById('friendsForChat'); 
+        if(!container) return; 
+        let myFriends = friends[currentUser] || []; 
+        container.innerHTML = myFriends.map(f => `<div class="friends-user" onclick="selectFriendForChat('${escapeHtml(f)}')">${escapeHtml(f)}</div>`).join('') || '<div>Нет друзей</div>'; 
+    }
+    function selectFriendForChat(friend) { 
+        selectedChatFriend = friend; 
+        document.getElementById('chatHeader').innerHTML = `Чат с ${escapeHtml(friend)}`; 
+        let msgs = getMessages(currentUser, friend); 
+        document.getElementById('chatMessagesDisplay').innerHTML = msgs.map(m => `<div class="msg-bubble" style="align-self:${m.from === currentUser ? 'flex-end' : 'flex-start'};background:${m.from === currentUser ? '#1e2f44' : '#1a1a1a'}"><small>${escapeHtml(m.from)}</small><br>${escapeHtml(m.text)}<br><small>${m.time}</small></div>`).join(''); 
+        document.getElementById('chatMessagesDisplay').scrollTop = document.getElementById('chatMessagesDisplay').scrollHeight; 
+    }
+    
+    function setCityFilter(city) { 
+        selectedCity = (selectedCity === city) ? '' : city; 
+        saveAll(); 
+        renderCitiesUI(); 
+        renderUsersList(); 
+        playBeep(); 
+        showNotification(selectedCity ? `Фильтр: город ${city}` : "Фильтр города сброшен", "city"); 
+    }
+    
+    function setVacancyFilter(vac) { 
+        selectedVacancy = (selectedVacancy === vac) ? '' : vac; 
+        saveAll(); 
+        renderVacanciesUI(); 
+        renderUsersList(); 
+        playBeep(); 
+        showNotification(selectedVacancy ? `Фильтр: профессия ${vac}` : "Фильтр профессии сброшен", "briefcase"); 
+    }
+    
+    function resetCityFilter() { selectedCity = ''; saveAll(); renderCitiesUI(); renderUsersList(); playBeep(); showNotification("Фильтр города сброшен", "refresh"); }
+    function resetVacancyFilter() { selectedVacancy = ''; saveAll(); renderVacanciesUI(); renderUsersList(); playBeep(); showNotification("Фильтр профессии сброшен", "refresh"); }
+    
+    function renderCitiesUI() { 
+        let div = document.getElementById('citiesList'); 
+        if(!div) return; 
+        div.innerHTML = defaultCities.map(c => `<span class="city-chip ${selectedCity === c ? 'active' : ''}" data-city="${escapeHtml(c)}">${escapeHtml(c)}</span>`).join(''); 
+        document.querySelectorAll('.city-chip').forEach(el => { el.onclick = () => setCityFilter(el.getAttribute('data-city')); }); 
+    }
+    
+    function renderVacanciesUI() { 
+        let div = document.getElementById('vacanciesList'); 
+        if(!div) return; 
+        div.innerHTML = defaultVacancies.map(v => `<span class="vacancy-chip ${selectedVacancy === v ? 'active' : ''}" data-vac="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join(''); 
+        document.querySelectorAll('.vacancy-chip').forEach(el => { el.onclick = () => setVacancyFilter(el.getAttribute('data-vac')); }); 
+    }
+    
+    function findAnyCity() { 
+        let q = document.getElementById('citySearchInput').value.trim(); 
+        if(!q) { showNotification("Введите город", "exclamation-triangle"); return; } 
+        setCityFilter(q); 
+        document.getElementById('citySearchModal').style.display = 'none'; 
+        document.getElementById('overlay').classList.remove('show'); 
+        document.getElementById('citySearchInput').value = ''; 
+    }
+    
+    function findAnyVacancy() { 
+        let q = document.getElementById('vacancySearchInput').value.trim(); 
+        if(!q) { showNotification("Введите профессию", "exclamation-triangle"); return; } 
+        setVacancyFilter(q); 
+        document.getElementById('vacancySearchModal').style.display = 'none'; 
+        document.getElementById('overlay').classList.remove('show'); 
+        document.getElementById('vacancySearchInput').value = ''; 
+    }
+    
+    function register(l, p, c) { 
+        if(!l.trim() || !p.trim() || !c.trim()) { showNotification("Заполните все поля", "exclamation-triangle"); return false; } 
+        if(users.find(u => u.login === l)) { showNotification("Логин занят", "exclamation-triangle"); return false; } 
+        users.push({ login: l, password: p, contact: c, subscription: { active: false, expiresAt: 0, usedFree: false } }); 
+        saveAll(); 
+        showNotification(`Аккаунт ${l} создан!`, "check-circle"); 
+        return true; 
+    }
+    
+    function login(l, p) { 
+        let user = users.find(u => u.login === l && u.password === p); 
+        if(!user) { showNotification("Неверный логин или пароль", "exclamation-triangle"); return false; } 
+        currentUser = l; 
+        localStorage.setItem('pm_current', currentUser); 
+        showNotification(`Добро пожаловать, ${l}!`, "user-check"); 
+        renderAll(); 
+        return true; 
+    }
+    
+    async function logout() { 
+        if(await showConfirm("Выход из аккаунта", "Вы действительно хотите выйти?")) { 
+            currentUser = null; 
+            localStorage.removeItem('pm_current'); 
+            renderAll(); 
+            showNotification("Вы вышли из аккаунта", "sign-out-alt"); 
+            document.getElementById('authModal').classList.add('show'); 
+        } 
+    }
+    
+    function updateSettingsUI() { 
+        let subDiv = document.getElementById('subInfo'); 
+        if(!currentUser) { if(subDiv) subDiv.innerHTML = '<i class="fas fa-crown"></i> Войдите в аккаунт'; return; } 
+        if(hasSubscription(currentUser)) { 
+            let days = Math.ceil((users.find(u => u.login === currentUser).subscription.expiresAt - Date.now()) / (1000 * 60 * 60 * 24)); 
+            subDiv.innerHTML = `<i class="fas fa-crown"></i> Подписка активна: ${days} дн. | Анкет: ${getUserProfilesCount(currentUser)}/1`; 
+        } else subDiv.innerHTML = `<i class="fas fa-times-circle"></i> Нет подписки. Активируйте бесплатную (1 раз).`; 
+    }
+    
+    function updateAccount(nl, np, nc) { 
+        if(!currentUser) return false; 
+        let idx = users.findIndex(u => u.login === currentUser); 
+        if(idx === -1) return false; 
+        let changed = false; 
+        if(nl.trim() && nl !== currentUser) { 
+            if(users.find(u => u.login === nl)) { showNotification("Логин занят", "exclamation-triangle"); return false; } 
+            profiles.forEach(p => { if(p.author === currentUser) p.author = nl; }); 
+            currentUser = nl; 
+            localStorage.setItem('pm_current', currentUser); 
+            users[idx].login = nl; 
+            changed = true; 
+        } 
+        if(np.trim()) { users[idx].password = np; changed = true; } 
+        if(nc.trim()) { users[idx].contact = nc; changed = true; } 
+        if(changed) { saveAll(); showNotification("Данные аккаунта обновлены", "check-circle"); renderAll(); } 
+        else showNotification("Нет новых значений", "info-circle"); 
+        return true; 
+    }
+    
+    function showTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+        let targetId = tabId + 'Tab';
+        let el = document.getElementById(targetId);
+        if(el) el.style.display = 'block';
+        if(tabId === 'home') renderUsersList();
+        if(tabId === 'cities') renderCitiesUI();
+        if(tabId === 'vacancies') renderVacanciesUI();
+        if(tabId === 'friends' && currentUser) renderFriendsList();
+        if(tabId === 'chats' && currentUser) renderFriendsForChat();
+    }
+    
+    function renderAll() { 
+        renderUsersList(); 
+        updateSettingsUI(); 
+        updateCreateFormVisibility(); 
+    }
+    
+    document.getElementById('publishProfileBtn').onclick = publishProfile;
+    document.getElementById('buySubBtn').onclick = activateFreeSubscription;
+    document.getElementById('saveSettingsBtn').onclick = () => { 
+        let nl = document.getElementById('newLogin').value.trim(); 
+        let np = document.getElementById('newPass').value.trim(); 
+        let nc = document.getElementById('newContact').value.trim(); 
+        updateAccount(nl, np, nc); 
+        document.getElementById('settingsModal').classList.remove('show'); 
+    };
+    document.getElementById('closeSettings').onclick = () => document.getElementById('settingsModal').classList.remove('show');
+    document.getElementById('closeProfileBtn').onclick = () => { document.getElementById('profileModal').classList.remove('show'); document.getElementById('overlay').classList.remove('show'); };
+    document.getElementById('addReviewBtn').onclick = () => { 
+        if(!currentUser){ showNotification("Войдите", "exclamation-triangle"); return; } 
+        let text = document.getElementById('reviewText').value; 
+        let rating = document.getElementById('reviewRating').value; 
+        if(window.currentProfileUser) addReview(window.currentProfileUser, currentUser, rating, text); 
+        document.getElementById('reviewText').value = ''; 
+    };
+    document.getElementById('sendChatBtn').onclick = () => { 
+        if(!selectedChatFriend) return; 
+        let inp = document.getElementById('chatInput'); 
+        let txt = inp.value.trim(); 
+        if(txt) { 
+            sendMessage(selectedChatFriend, txt); 
+            inp.value = ''; 
+            let msgs = getMessages(currentUser, selectedChatFriend); 
+            document.getElementById('chatMessagesArea').innerHTML = msgs.map(m => `<div class="msg-bubble"><b>${escapeHtml(m.from)}</b>: ${escapeHtml(m.text)}<br><small>${m.time}</small></div>`).join(''); 
+        } 
+    };
+    document.getElementById('sendGlobalMsgBtn').onclick = () => { 
+        if(!selectedChatFriend) { showNotification("Выберите друга из списка", "exclamation-triangle"); return; } 
+        let inp = document.getElementById('globalChatInput'); 
+        let txt = inp.value.trim(); 
+        if(txt) { 
+            sendMessage(selectedChatFriend, txt); 
+            inp.value = ''; 
+            selectFriendForChat(selectedChatFriend); 
+        } 
+    };
+    document.getElementById('closeChatBtn').onclick = () => { document.getElementById('chatModal').classList.remove('show'); document.getElementById('overlay').classList.remove('show'); };
+    document.getElementById('resetCityFilterBtn').onclick = resetCityFilter;
+    document.getElementById('resetVacancyFilterBtn').onclick = resetVacancyFilter;
+    document.getElementById('findCityBtn').onclick = () => { document.getElementById('citySearchModal').style.display = 'flex'; document.getElementById('overlay').classList.add('show'); };
+    document.getElementById('findVacancyBtn').onclick = () => { document.getElementById('vacancySearchModal').style.display = 'flex'; document.getElementById('overlay').classList.add('show'); };
+    document.getElementById('applyCitySearchBtn').onclick = findAnyCity;
+    document.getElementById('applyVacancySearchBtn').onclick = findAnyVacancy;
+    document.getElementById('closeCitySearchBtn').onclick = () => { document.getElementById('citySearchModal').style.display = 'none'; document.getElementById('overlay').classList.remove('show'); };
+    document.getElementById('closeVacancySearchBtn').onclick = () => { document.getElementById('vacancySearchModal').style.display = 'none'; document.getElementById('overlay').classList.remove('show'); };
+    
+    const sidebar = document.getElementById('sidebar'), overlayDiv = document.getElementById('overlay');
+    function closeSidebar() { sidebar.classList.remove('open'); overlayDiv.classList.remove('show'); }
+    function openSidebar() { sidebar.classList.add('open'); overlayDiv.classList.add('show'); }
+    document.getElementById('menuBtn').onclick = () => { if(sidebar.classList.contains('open')) closeSidebar(); else openSidebar(); };
+    overlayDiv.onclick = closeSidebar;
+    document.querySelectorAll('.sidebar a[data-tab]').forEach(link => { link.onclick = function(e) { e.preventDefault(); showTab(this.getAttribute('data-tab')); closeSidebar(); }; });
+    document.getElementById('openSettings').onclick = () => { if(!currentUser) { showNotification("Войдите в аккаунт", "exclamation-triangle"); return; } updateSettingsUI(); document.getElementById('settingsModal').classList.add('show'); closeSidebar(); };
+    document.getElementById('openProfileSettings').onclick = () => { if(!currentUser) { showNotification("Войдите в аккаунт", "exclamation-triangle"); return; } window.openUserProfile(currentUser); closeSidebar(); };
+    document.getElementById('logoutBtn').onclick = () => { logout(); closeSidebar(); };
+    
+    const authModal = document.getElementById('authModal');
+    document.getElementById('showLogin').onclick = () => { document.getElementById('loginForm').style.display = 'block'; document.getElementById('regForm').style.display = 'none'; document.getElementById('showLogin').className = 'btn-primary'; document.getElementById('showReg').className = 'btn-outline'; };
+    document.getElementById('showReg').onclick = () => { document.getElementById('loginForm').style.display = 'none'; document.getElementById('regForm').style.display = 'block'; document.getElementById('showReg').className = 'btn-primary'; document.getElementById('showLogin').className = 'btn-outline'; };
+    document.getElementById('doLogin').onclick = () => { let l = document.getElementById('loginUser').value; let p = document.getElementById('loginPass').value; if(login(l, p)) authModal.classList.remove('show'); };
+    document.getElementById('doReg').onclick = () => { let l = document.getElementById('regUser').value; let p = document.getElementById('regPass').value; let c = document.getElementById('regContact').value; if(register(l, p, c)) document.getElementById('showLogin').click(); };
+    
+    if(!currentUser) setTimeout(() => { if(!currentUser && authModal) authModal.classList.add('show'); }, 200);
+    showTab('home');
+</script>
+</body>
+</html>
